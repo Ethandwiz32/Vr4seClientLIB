@@ -8,7 +8,7 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-#include "../include/vr4seclient.h"
+#include "vr4seclient.h"
 #include <stdio.h>
 #include <sys/mman.h>
 #include <fcntl.h>
