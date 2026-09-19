@@ -1,4 +1,4 @@
-name: Build vr4seclient.so
+name: Build vr4seclient v3
 
 on:
   push:
@@ -19,6 +19,32 @@ jobs:
           ndk-version: r25c
           add-to-path: true
 
+      - name: Download Dobby prebuilt (AArch64)
+        run: |
+          mkdir -p libs/arm64-v8a
+          # Dobby release: static lib for Android arm64
+          # Source: https://github.com/jmpews/Dobby
+          # We pull a known-good prebuilt from the Dobby CI artifacts.
+          # Replace this URL with your own Dobby build if needed.
+          curl -L "https://github.com/jmpews/Dobby/releases/download/v1.0/libdobby-arm64-android.a" \
+               -o libs/arm64-v8a/libdobby.a 2>/dev/null || \
+          # Fallback: build Dobby from source in this CI step
+          (
+            sudo apt-get install -y cmake ninja-build &&
+            git clone --depth 1 https://github.com/jmpews/Dobby.git /tmp/dobby &&
+            mkdir -p /tmp/dobby/build && cd /tmp/dobby/build &&
+            cmake .. \
+              -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake \
+              -DANDROID_ABI=arm64-v8a \
+              -DANDROID_PLATFORM=android-29 \
+              -DANDROID_STL=c++_static \
+              -DCMAKE_BUILD_TYPE=Release \
+              -GNinja &&
+            ninja -j$(nproc) &&
+            cp libdobby.a $GITHUB_WORKSPACE/libs/arm64-v8a/
+          )
+          ls -lh libs/arm64-v8a/
+
       - name: Build libvr4seclient.so
         run: |
           $ANDROID_NDK_HOME/ndk-build \
@@ -27,9 +53,16 @@ jobs:
             NDK_APPLICATION_MK=Application.mk \
             -j$(nproc)
 
-      - name: Upload .so as artifact
+      - name: Upload .so artifact
         uses: actions/upload-artifact@v4
         with:
-          name: libvr4seclient
+          name: libvr4seclient-v3
           path: libs/arm64-v8a/libvr4seclient.so
+          retention-days: 30
+
+      - name: Upload full libs folder
+        uses: actions/upload-artifact@v4
+        with:
+          name: libs-arm64
+          path: libs/arm64-v8a/
           retention-days: 30
