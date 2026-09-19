@@ -1,5 +1,4 @@
-# Application.mk — vr4seclient
-# Target only AArch64 (modern Android VR headsets are all arm64)
+# Application.mk — vr4seclient v3
 APP_ABI          := arm64-v8a
 APP_PLATFORM     := android-29
 APP_STL          := c++_static
